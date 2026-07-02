@@ -10,6 +10,8 @@ var (
 	styleBold    = lipgloss.NewStyle().Bold(true)
 	styleTask    = lipgloss.NewStyle().Foreground(lipgloss.Color("#E4DFD0"))
 
+	styleDanger = lipgloss.NewStyle().Foreground(lipgloss.Color("#E05252"))
+
 	styleBox = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("#1E2A38")).

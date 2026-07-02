@@ -36,8 +36,19 @@ type Task struct {
 	Status      Status
 	ParentID    *string
 	Tags        []string
+	DueDate     *time.Time
 	CreatedAt   time.Time
 	CompletedAt *time.Time
+}
+
+// IsOverdue returns true if the task has a due date in the past.
+func (t *Task) IsOverdue() bool {
+	return t.DueDate != nil && t.DueDate.Before(time.Now())
+}
+
+// DueSoon returns true if due within 24 hours.
+func (t *Task) DueSoon() bool {
+	return t.DueDate != nil && !t.IsOverdue() && t.DueDate.Before(time.Now().Add(24*time.Hour))
 }
 
 // energyScore maps energy level to a numeric value for comparison.

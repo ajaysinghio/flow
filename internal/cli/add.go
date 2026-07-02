@@ -10,41 +10,34 @@ import (
 )
 
 func newAddCmd(a *app.App) *cobra.Command {
-	var size, energy, parentID string
-	var tags []string
+	var due string
 
 	cmd := &cobra.Command{
-		Use:     "add <title>",
-		Short:   "Capture a task",
-		Example: `  flow add "write the report" --size l --energy high`,
-		Args:    cobra.MinimumNArgs(1),
+		Use:   "add <title>",
+		Short: "Capture a task",
+		Example: `  flow add "call the dentist"
+  flow add "finish report" --due friday
+  flow add "renew subscription" --due 2026-07-10`,
+		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			title := strings.Join(args, " ")
-			var pid *string
-			if parentID != "" {
-				pid = &parentID
-			}
-			t, err := a.Tasks.Add(title, task.Size(size), task.Energy(energy), tags, pid)
+			dueDate := task.ParseDue(due)
+
+			t, err := a.Tasks.AddWithDue(title, task.SizeM, task.EnergyMed, nil, nil, dueDate)
 			if err != nil {
 				return err
 			}
-			fmt.Printf("\n  %s %s\n",
-				styleGreen.Render("✓ added"),
-				styleTask.Render(t.Title),
-			)
-			fmt.Printf("  %s  %s  %s  %s\n\n",
-				styleDim.Render(t.ID[:8]+"…"),
-				styleDim.Render("size:"+string(t.Size)),
-				energyColor(string(t.Energy)).Render("energy:"+string(t.Energy)),
-				styleDim.Render(sizeLabel(string(t.Size))),
-			)
+
+			fmt.Printf("\n  %s %s", styleGreen.Render("✓ added"), styleTask.Render(t.Title))
+			if dueDate != nil {
+				fmt.Printf("  %s", styleAccent.Render("due "+task.FormatDue(t)))
+			}
+			fmt.Println()
+			fmt.Printf("  %s\n\n", styleDim.Render(t.ID[:8]+"…"))
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&size, "size", "m", "Task size: xs s m l xl")
-	cmd.Flags().StringVar(&energy, "energy", "med", "Energy needed: low med high")
-	cmd.Flags().StringVar(&parentID, "parent", "", "Parent task ID (creates a subtask)")
-	cmd.Flags().StringSliceVar(&tags, "tag", nil, "Tags (repeatable)")
+	cmd.Flags().StringVar(&due, "due", "", "Due date: today, tomorrow, friday, next week, 2026-07-10")
 	return cmd
 }

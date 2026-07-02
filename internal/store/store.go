@@ -29,6 +29,8 @@ func Open() (*DB, error) {
 	if _, err := db.Exec(schema); err != nil {
 		return nil, fmt.Errorf("apply schema: %w", err)
 	}
+	// Idempotent migrations — ADD COLUMN is a no-op if column already exists
+	_, _ = db.Exec(`ALTER TABLE tasks ADD COLUMN due_date TEXT`)
 	return &DB{db}, nil
 }
 

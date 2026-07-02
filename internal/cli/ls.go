@@ -30,11 +30,23 @@ func newLsCmd(a *app.App) *cobra.Command {
 				} else if t.Status == task.StatusDone {
 					icon, st = "✓", styleGreen
 				}
-				fmt.Printf("  %s  %s  %s  %s\n",
+
+				due := ""
+				if d := task.FormatDue(t); d != "" {
+					if t.IsOverdue() {
+						due = "  " + styleDanger.Render("⚠ "+d)
+					} else if t.DueSoon() {
+						due = "  " + styleAccent.Render("⏰ "+d)
+					} else {
+						due = "  " + styleDim.Render(d)
+					}
+				}
+
+				fmt.Printf("  %s  %s%s  %s\n",
 					st.Render(icon),
 					styleTask.Render(t.Title),
+					due,
 					styleDim.Render(t.ID[:8]+"…"),
-					energyColor(string(t.Energy)).Render(sizeLabel(string(t.Size))),
 				)
 			}
 			fmt.Println()

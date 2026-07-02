@@ -5,6 +5,24 @@ import (
 	"time"
 )
 
+// Ranked returns tasks scored for the given energy level, best first.
+// Used by pick to show options.
+func Ranked(tasks []*Task, energyLevel int) []*Task {
+	eligible := filterByEnergy(tasks, energyLevel)
+	if len(eligible) == 0 {
+		return nil
+	}
+	scored := scoreAll(eligible, energyLevel)
+	sort.Slice(scored, func(i, j int) bool {
+		return scored[i].score > scored[j].score
+	})
+	out := make([]*Task, len(scored))
+	for i, s := range scored {
+		out[i] = s.task
+	}
+	return out
+}
+
 // Suggest returns the single best task for the given energy level (1–5).
 // Never returns a list — one answer, always.
 func Suggest(tasks []*Task, energyLevel int) *Task {
@@ -76,6 +94,18 @@ func scoreTask(t *Task, energyLevel int, now time.Time) float64 {
 	// Continuity: already in-progress tasks get a strong boost
 	if t.Status == StatusDoing {
 		score += 4.0
+	}
+
+	// Due date urgency
+	if t.DueDate != nil {
+		hoursUntilDue := t.DueDate.Sub(now).Hours()
+		if hoursUntilDue < 0 {
+			score += 8.0 // overdue — surface immediately
+		} else if hoursUntilDue < 24 {
+			score += 5.0 // due today
+		} else if hoursUntilDue < 72 {
+			score += 2.0 // due this week
+		}
 	}
 
 	return score

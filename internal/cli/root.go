@@ -23,6 +23,7 @@ func NewRoot(a *app.App) *cobra.Command {
 
 	root.AddCommand(
 		newAddCmd(a),
+		newPickCmd(a),
 		newInCmd(a),
 		newDoneCmd(a),
 		newLsCmd(a),
@@ -60,8 +61,14 @@ func runNow(a *app.App) error {
 	}
 
 	if suggested == nil {
-		fmt.Println(styleGreen.Render("  ✓ Nothing left in your queue."))
-		fmt.Println(styleDim.Render("  Add something with: flow add \"task title\""))
+		if len(all) == 0 {
+			fmt.Println(styleGreen.Render("  ✓ Nothing in your queue."))
+			fmt.Println(styleDim.Render("  Add something: flow add \"task title\""))
+		} else {
+			fmt.Printf(styleDim.Render("  No tasks match your current energy (%d/5).\n"), energyLevel)
+			fmt.Println(styleDim.Render("  Try: flow pick  to choose from your full list"))
+			fmt.Println(styleDim.Render("       flow in   to update your energy level"))
+		}
 		return nil
 	}
 
