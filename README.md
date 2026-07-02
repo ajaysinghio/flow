@@ -33,7 +33,7 @@ Requires Go 1.21+. Single binary, no runtime dependencies, data stored locally a
 flow
 ```
 
-Reads your last mood check-in and returns the single best task for your current energy. No list. One answer.
+Reads your last check-in and returns the single best task for your current energy. No list. One answer.
 
 ```
   → right now:
@@ -47,16 +47,58 @@ Reads your last mood check-in and returns the single best task for your current 
   flow break <id>   — break it into steps
 ```
 
+If your energy is too low for any task in your queue, flow tells you why and suggests next steps rather than showing an empty screen:
+
+```
+  No tasks match your current energy (1/5).
+  Try: flow pick  to choose from your full list
+       flow in   to update your energy level
+```
+
+---
+
 ### Add a task
 
 ```bash
-flow add "write the quarterly review" --size l --energy high
-flow add "reply to slack" --size xs --energy low
-flow add "review the PR" --size s --energy med
+flow add "call the dentist"
+flow add "finish the report" --due friday
+flow add "renew subscription" --due 2026-07-10
+flow add "prep for standup" --due tomorrow
 ```
 
-`--size` — `xs s m l xl` (how much work it is)  
-`--energy` — `low med high` (what state you need to be in)
+No required flags. Just write the task. `--due` is the only optional flag and accepts natural language:
+
+| Input | Means |
+|---|---|
+| `today` | end of today |
+| `tomorrow` | end of tomorrow |
+| `friday` | end of next Friday |
+| `next week` | 7 days from now |
+| `2026-07-10` | specific date |
+
+---
+
+### Pick a task, focus, done
+
+```bash
+flow pick
+flow pick --minutes 45
+```
+
+The full loop in one command. Shows your queue ranked by urgency and energy, you pick one, a focus timer starts, and when time's up you're asked whether to mark it done.
+
+```
+  Pick a task  ↑↓ navigate  Enter to start  q to cancel
+
+  ▶ reply to the thread          ← cursor
+    finish the report  (friday)
+    call the dentist   (today)
+    prep for standup
+```
+
+This is the recommended way to start a work block.
+
+---
 
 ### Check in your mood and energy
 
@@ -66,12 +108,25 @@ flow in
 
 A quick interactive check-in (30 seconds). Your energy level gates which tasks get suggested — low energy surfaces only low-effort tasks, so you're never pushed into a mismatch.
 
+---
+
 ### List your queue
 
 ```bash
 flow ls         # pending tasks
 flow ls --all   # include completed
 ```
+
+Due dates are shown inline with urgency indicators:
+
+```
+  ○  finish the report   ⚠ overdue    01KWHSKF…
+  ○  call the dentist    ⏰ today      01KWHSKF…
+  ○  review the PR       fri          01KWHSKF…
+  ○  reply to thread                  01KWHSKF…
+```
+
+---
 
 ### Mark done
 
@@ -80,21 +135,17 @@ flow done            # completes the currently suggested task
 flow done 01KWHSKF   # complete a specific task by id prefix
 ```
 
+---
+
 ### Break a task into steps
 
 ```bash
 flow break 01KWHSKF "open the doc" "write the intro" "fill section 1" "review"
 ```
 
-Creates subtasks linked to the parent. Each step is `xs` and inherits the parent's energy level.
+Creates subtasks linked to the parent. Each step is `xs` sized and inherits the parent's energy level.
 
-### Capture a thought
-
-```bash
-flow note "too distracted to start, going for a walk"
-```
-
-Zero friction. No category, no tag required.
+---
 
 ### Focus timer
 
@@ -104,7 +155,19 @@ flow focus 01KWHSKF      # focus on a specific task
 flow focus --minutes 45  # custom duration
 ```
 
-Shows a live countdown. Ctrl+C ends the session early and records it as interrupted.
+Shows a live countdown. Ctrl+C ends the session early and records it as interrupted. Prefer `flow pick` if you haven't chosen a task yet — it combines picking, focusing, and marking done in one flow.
+
+---
+
+### Capture a thought
+
+```bash
+flow note "too distracted to start, going for a walk"
+```
+
+Zero friction. No category, no tag required.
+
+---
 
 ### Insights
 
@@ -126,26 +189,32 @@ flow tray
 Adds flow to your macOS menu bar (or Windows system tray). Shows your current suggested task and lets you act on it without opening a terminal.
 
 ```
-⌃  → review PR from team
-   ✓  Mark done
-   ↻  Refresh
-   ──────────────────────
-   +  Add task…             ← native input dialog
-   ◎  Check in  ▶  1 drained
-                   2 low
-                   3 medium
-                   4 good
-                   5 charged
-   ──────────────────────
-   Quit flow
+  →  reply to the thread
+  ✓  Mark done
+  ↻  Refresh
+  ──────────────────────
+  ≡  Pick a task  ▶  reply to the thread
+                     finish the report  (friday)
+                     call the dentist   (today)
+                     review the PR
+                     prep for standup
+  +  Add task…
+  ◎  Check in    ▶  1  drained
+                    2  low
+                    3  medium
+                    4  good
+                    5  charged
+  ──────────────────────
+  Quit flow
 ```
 
-- The suggested task updates automatically every 30 seconds
+- Suggested task updates automatically every 30 seconds
+- **Pick a task** submenu shows the top 5 ranked tasks with due dates — click any to make it current
 - **Add task** opens a native macOS dialog box — no terminal needed
-- **Check in** sets your energy level instantly from the submenu, which immediately affects what task gets suggested
+- **Check in** sets your energy instantly, which immediately affects what gets suggested
 - All actions write to the same `~/.flow/flow.db` as the CLI and AI integrations
 
-To run it on login, add it to your macOS Login Items (`System Settings → General → Login Items`) pointing at the `flow tray` command.
+To run on login, add it to macOS Login Items (`System Settings → General → Login Items`).
 
 ---
 
@@ -155,11 +224,9 @@ flow speaks two protocols — use whichever your AI supports.
 
 ---
 
-## ChatGPT, Gemini, and any OpenAPI AI (`flow serve`)
+### ChatGPT, Gemini, and any OpenAPI AI (`flow serve`)
 
 `flow serve` starts a local REST API at `localhost:7777` and serves an OpenAPI 3.1 spec at `/openapi.json`. Any AI that supports OpenAPI tool calling can use it.
-
-### Start the server
 
 ```bash
 flow serve                          # no auth, port 7777
@@ -168,7 +235,7 @@ FLOW_API_KEY=mysecretkey flow serve # via env var
 flow serve --port 8080              # custom port
 ```
 
-### Connect to ChatGPT (Custom GPT)
+**Connect to ChatGPT (Custom GPT)**
 
 1. Run `flow serve --api-key <your-key>`
 2. Expose it with a tunnel: `npx cloudflared tunnel --url http://localhost:7777`
@@ -176,11 +243,11 @@ flow serve --port 8080              # custom port
 4. Set auth: **API Key** → **Bearer** → your key
 5. Ask it: *"I have 90 minutes and I'm exhausted — what should I work on?"*
 
-### Connect to Gemini / Copilot / others
+**Connect to Gemini / Copilot / others**
 
 Any AI with OpenAPI support follows the same pattern — point it at `/openapi.json` and it discovers all available operations automatically.
 
-### REST API endpoints
+**REST API endpoints**
 
 | Method | Path | What it does |
 |---|---|---|
@@ -196,11 +263,9 @@ Any AI with OpenAPI support follows the same pattern — point it at `/openapi.j
 
 ---
 
-## Claude integration (MCP)
+### Claude integration (MCP)
 
-`flow` runs as an MCP server, giving Claude full read/write access to your tasks, check-ins, and notes. Ask Claude to plan your day, break down tasks, or log how you're feeling — it all writes to the same local database your CLI uses.
-
-### Setup
+`flow` runs as an MCP server, giving Claude full read/write access to your tasks, check-ins, and notes.
 
 Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on Mac):
 
@@ -219,13 +284,13 @@ Restart Claude Desktop. Then just talk to it:
 
 > *"I have 90 minutes and I'm running at about 30% today — what should I work on?"*
 
-> *"Add a task: prep for the 3pm call, medium size, medium energy"*
+> *"Add a task: prep for the 3pm call, due today"*
 
 > *"I just finished the report. Mark it done and tell me what's next."*
 
 > *"Break down 'write the proposal' into steps I can actually start"*
 
-### MCP tools available to Claude
+**MCP tools available to Claude**
 
 | Tool | What it does |
 |---|---|
@@ -242,14 +307,20 @@ Restart Claude Desktop. Then just talk to it:
 
 ## How task suggestion works
 
-`flow` never shows you a list and asks you to choose. The `flow` command (and `suggest_task` MCP tool) runs this logic:
+`flow` never asks you to choose. The `flow` command runs this logic:
 
 1. Read your latest check-in (within the last 4 hours). Default to energy 3/5 if none.
 2. Filter out tasks that require more energy than you have right now.
-3. Score remaining tasks: prefer smaller tasks when energy is low, give a boost to anything already in progress, nudge older tasks slightly to prevent infinite deferral.
+3. Score remaining tasks:
+   - **Overdue** tasks: +8 points — surfaces them first
+   - **Due today**: +5 points
+   - **Due this week**: +2 points
+   - **In progress**: +4 points — momentum matters
+   - **Smaller tasks** score higher when energy is low
+   - **Older tasks** get a mild nudge to prevent infinite deferral
 4. Return the top one.
 
-If your queue is empty or nothing matches your energy, it tells you — and always suggests a next move.
+If your energy is too low for any task in your queue, flow says so and tells you what to do — it never shows a blank screen.
 
 ---
 
