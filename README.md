@@ -4,6 +4,15 @@ One task at a time. For brains that need it.
 
 `flow` is a CLI tool and AI server for people with ADHD, burnout, or anyone who finds conventional task managers overwhelming. It matches your tasks to your current energy level, never shows you a list when you just need one answer, and integrates with Claude, ChatGPT, Gemini, and any OpenAPI-aware AI so you can manage your day in plain conversation.
 
+It runs in four ways — pick whatever has the least friction right now:
+
+| Interface | Command | Best for |
+|---|---|---|
+| Terminal | `flow` | Developers, quick captures |
+| Menu bar | `flow tray` | Always-on, glanceable |
+| Claude (MCP) | `flow mcp` | Conversational planning |
+| ChatGPT / Gemini | `flow serve` | OpenAPI tool calling |
+
 ---
 
 ## Install
@@ -105,6 +114,38 @@ flow insights --days 14
 ```
 
 Average mood and energy, task completion rate, and a 7-day mood chart.
+
+---
+
+## macOS menu bar / Windows system tray
+
+```bash
+flow tray
+```
+
+Adds flow to your macOS menu bar (or Windows system tray). Shows your current suggested task and lets you act on it without opening a terminal.
+
+```
+⌃  → review PR from team
+   ✓  Mark done
+   ↻  Refresh
+   ──────────────────────
+   +  Add task…             ← native input dialog
+   ◎  Check in  ▶  1 drained
+                   2 low
+                   3 medium
+                   4 good
+                   5 charged
+   ──────────────────────
+   Quit flow
+```
+
+- The suggested task updates automatically every 30 seconds
+- **Add task** opens a native macOS dialog box — no terminal needed
+- **Check in** sets your energy level instantly from the submenu, which immediately affects what task gets suggested
+- All actions write to the same `~/.flow/flow.db` as the CLI and AI integrations
+
+To run it on login, add it to your macOS Login Items (`System Settings → General → Login Items`) pointing at the `flow tray` command.
 
 ---
 
