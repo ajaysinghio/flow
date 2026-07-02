@@ -34,6 +34,7 @@ func NewRoot(db *store.DB) *cobra.Command {
 		newFocusCmd(db),
 		newInsightsCmd(db),
 		newMCPCmd(db),
+		newServeCmd(db),
 	)
 	return root
 }

@@ -2,7 +2,7 @@
 
 One task at a time. For brains that need it.
 
-`flow` is a CLI tool and MCP server for people with ADHD, burnout, or anyone who finds conventional task managers overwhelming. It matches your tasks to your current energy level, never shows you a list when you just need one answer, and integrates with Claude so you can manage your day in plain conversation.
+`flow` is a CLI tool and AI server for people with ADHD, burnout, or anyone who finds conventional task managers overwhelming. It matches your tasks to your current energy level, never shows you a list when you just need one answer, and integrates with Claude, ChatGPT, Gemini, and any OpenAPI-aware AI so you can manage your day in plain conversation.
 
 ---
 
@@ -105,6 +105,53 @@ flow insights --days 14
 ```
 
 Average mood and energy, task completion rate, and a 7-day mood chart.
+
+---
+
+## AI integrations
+
+flow speaks two protocols — use whichever your AI supports.
+
+---
+
+## ChatGPT, Gemini, and any OpenAPI AI (`flow serve`)
+
+`flow serve` starts a local REST API at `localhost:7777` and serves an OpenAPI 3.1 spec at `/openapi.json`. Any AI that supports OpenAPI tool calling can use it.
+
+### Start the server
+
+```bash
+flow serve                          # no auth, port 7777
+flow serve --api-key mysecretkey    # with Bearer token auth
+FLOW_API_KEY=mysecretkey flow serve # via env var
+flow serve --port 8080              # custom port
+```
+
+### Connect to ChatGPT (Custom GPT)
+
+1. Run `flow serve --api-key <your-key>`
+2. Expose it with a tunnel: `npx cloudflared tunnel --url http://localhost:7777`
+3. In your Custom GPT → **Actions** → **Import from URL**: paste `https://<tunnel-url>/openapi.json`
+4. Set auth: **API Key** → **Bearer** → your key
+5. Ask it: *"I have 90 minutes and I'm exhausted — what should I work on?"*
+
+### Connect to Gemini / Copilot / others
+
+Any AI with OpenAPI support follows the same pattern — point it at `/openapi.json` and it discovers all available operations automatically.
+
+### REST API endpoints
+
+| Method | Path | What it does |
+|---|---|---|
+| `GET` | `/context` | Full state: tasks + last check-in + recent notes |
+| `GET` | `/tasks` | List pending tasks |
+| `POST` | `/tasks` | Add a task |
+| `GET` | `/tasks/suggest` | Best task for current energy |
+| `PUT` | `/tasks/{id}/complete` | Mark done |
+| `POST` | `/tasks/{id}/breakdown` | Break into micro-steps |
+| `POST` | `/checkins` | Log mood + energy |
+| `POST` | `/notes` | Capture a thought |
+| `GET` | `/insights` | Mood trends + completion stats |
 
 ---
 
