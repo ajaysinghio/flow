@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ajaykumarsingh/flow/internal/store"
+	"github.com/ajaykumarsingh/flow/internal/app"
 	"github.com/ajaykumarsingh/flow/internal/task"
 	"github.com/spf13/cobra"
 )
 
-func newAddCmd(db *store.DB) *cobra.Command {
+func newAddCmd(a *app.App) *cobra.Command {
 	var size, energy, parentID string
 	var tags []string
 
@@ -20,18 +20,14 @@ func newAddCmd(db *store.DB) *cobra.Command {
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			title := strings.Join(args, " ")
-			svc := task.NewService(db)
-
 			var pid *string
 			if parentID != "" {
 				pid = &parentID
 			}
-
-			t, err := svc.Add(title, task.Size(size), task.Energy(energy), tags, pid)
+			t, err := a.Tasks.Add(title, task.Size(size), task.Energy(energy), tags, pid)
 			if err != nil {
 				return err
 			}
-
 			fmt.Printf("\n  %s %s\n",
 				styleGreen.Render("✓ added"),
 				styleTask.Render(t.Title),

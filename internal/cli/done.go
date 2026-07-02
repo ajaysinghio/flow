@@ -4,32 +4,27 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ajaykumarsingh/flow/internal/mood"
-	"github.com/ajaykumarsingh/flow/internal/store"
+	"github.com/ajaykumarsingh/flow/internal/app"
 	"github.com/ajaykumarsingh/flow/internal/task"
 	"github.com/spf13/cobra"
 )
 
-func newDoneCmd(db *store.DB) *cobra.Command {
+func newDoneCmd(a *app.App) *cobra.Command {
 	return &cobra.Command{
 		Use:     "done [task-id]",
 		Short:   "Mark the suggested task (or a specific task) as done",
 		Example: "  flow done\n  flow done 01ARZ3N",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			svc := task.NewService(db)
-			moods := mood.NewService(db)
-
 			var id string
 			if len(args) > 0 {
 				id = args[0]
 			} else {
-				// resolve the currently suggested task
-				checkin, _ := moods.Latest(4 * time.Hour)
+				checkin, _ := a.Moods.Latest(4 * time.Hour)
 				energy := 3
 				if checkin != nil {
 					energy = checkin.Energy
 				}
-				all, err := svc.List(false)
+				all, err := a.Tasks.List(false)
 				if err != nil {
 					return err
 				}
@@ -41,23 +36,17 @@ func newDoneCmd(db *store.DB) *cobra.Command {
 				id = suggested.ID
 			}
 
-			t, err := svc.Get(id)
+			t, err := a.Tasks.Get(id)
 			if err != nil {
-				// try prefix match
-				t, err = findByPrefix(svc, id)
+				t, err = findByPrefix(a.Tasks, id)
 				if err != nil {
 					return fmt.Errorf("task not found: %s", id)
 				}
 			}
-
-			if err := svc.Complete(t.ID); err != nil {
+			if err := a.Tasks.Complete(t.ID); err != nil {
 				return err
 			}
-
-			fmt.Printf("\n  %s  %s\n\n",
-				styleGreen.Render("✓ done"),
-				styleTask.Render(t.Title),
-			)
+			fmt.Printf("\n  %s  %s\n\n", styleGreen.Render("✓ done"), styleTask.Render(t.Title))
 			return nil
 		},
 	}

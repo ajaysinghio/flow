@@ -5,41 +5,41 @@ import (
 	"os"
 	"time"
 
-	"github.com/ajaykumarsingh/flow/internal/mood"
+	"github.com/ajaykumarsingh/flow/internal/app"
 	"github.com/ajaykumarsingh/flow/internal/store"
 	"github.com/ajaykumarsingh/flow/internal/task"
 	"github.com/spf13/cobra"
 )
 
-func NewRoot(db *store.DB) *cobra.Command {
-	tasks := task.NewService(db)
-	moods := mood.NewService(db)
-
+func NewRoot(a *app.App) *cobra.Command {
 	root := &cobra.Command{
 		Use:   "flow",
 		Short: "One task at a time. For brains that need it.",
 		Long:  `flow — a neurodivergent-aware task + mood CLI. Run 'flow' to get your next task.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runNow(tasks, moods)
+			return runNow(a)
 		},
 	}
 
 	root.AddCommand(
-		newAddCmd(db),
-		newInCmd(db),
-		newDoneCmd(db),
-		newLsCmd(db),
-		newBreakCmd(db),
-		newNoteCmd(db),
-		newFocusCmd(db),
-		newInsightsCmd(db),
-		newMCPCmd(db),
-		newServeCmd(db),
+		newAddCmd(a),
+		newInCmd(a),
+		newDoneCmd(a),
+		newLsCmd(a),
+		newBreakCmd(a),
+		newNoteCmd(a),
+		newFocusCmd(a),
+		newInsightsCmd(a),
+		newMCPCmd(a),
+		newServeCmd(a),
+		newTrayCmd(a),
 	)
 	return root
 }
 
-func runNow(tasks *task.Service, moods *mood.Service) error {
+func runNow(a *app.App) error {
+	tasks := a.Tasks
+	moods := a.Moods
 	checkin, _ := moods.Latest(4 * time.Hour)
 
 	energyLevel := 3 // default medium
@@ -95,7 +95,7 @@ func Execute() {
 	}
 	defer db.Close()
 
-	root := NewRoot(db)
+	root := NewRoot(app.New(db))
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
 	}

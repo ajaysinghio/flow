@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ajaykumarsingh/flow/internal/app"
 	"github.com/ajaykumarsingh/flow/internal/focus"
 	"github.com/ajaykumarsingh/flow/internal/journal"
 	"github.com/ajaykumarsingh/flow/internal/mood"
-	"github.com/ajaykumarsingh/flow/internal/store"
 	"github.com/ajaykumarsingh/flow/internal/task"
 )
 
@@ -22,12 +22,12 @@ type Server struct {
 	apiKey     string
 }
 
-func NewServer(db *store.DB, apiKey string) *Server {
+func NewServer(a *app.App, apiKey string) *Server {
 	return &Server{
-		taskSvc:    task.NewService(db),
-		moodSvc:    mood.NewService(db),
-		journalSvc: journal.NewService(db),
-		focusSvc:   focus.NewService(db),
+		taskSvc:    a.Tasks,
+		moodSvc:    a.Moods,
+		journalSvc: a.Journal,
+		focusSvc:   a.Focus,
 		apiKey:     apiKey,
 	}
 }

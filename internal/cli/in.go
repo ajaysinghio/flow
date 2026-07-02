@@ -5,20 +5,19 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/ajaykumarsingh/flow/internal/app"
 	"github.com/ajaykumarsingh/flow/internal/mood"
-	"github.com/ajaykumarsingh/flow/internal/store"
 	"github.com/spf13/cobra"
 )
 
 type checkinModel struct {
-	step    int // 0=mood, 1=energy, 2=note, 3=done
-	mood    int
-	energy  int
-	note    []rune
-	cursor  int
-	svc     *mood.Service
-	saved   bool
-	err     error
+	step   int
+	mood   int
+	energy int
+	note   []rune
+	svc    *mood.Service
+	saved  bool
+	err    error
 }
 
 func (m checkinModel) Init() tea.Cmd { return nil }
@@ -27,7 +26,7 @@ func (m checkinModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch m.step {
-		case 0: // mood
+		case 0:
 			switch msg.String() {
 			case "1", "2", "3", "4", "5":
 				m.mood = int(msg.String()[0] - '0')
@@ -35,7 +34,7 @@ func (m checkinModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "ctrl+c", "q":
 				return m, tea.Quit
 			}
-		case 1: // energy
+		case 1:
 			switch msg.String() {
 			case "1", "2", "3", "4", "5":
 				m.energy = int(msg.String()[0] - '0')
@@ -43,7 +42,7 @@ func (m checkinModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "ctrl+c", "q":
 				return m, tea.Quit
 			}
-		case 2: // note
+		case 2:
 			switch msg.String() {
 			case "enter":
 				_, m.err = m.svc.Save(m.mood, m.energy, string(m.note))
@@ -82,39 +81,33 @@ func (m checkinModel) View() string {
 			}
 			s += fmt.Sprintf("  %s  %s %s\n", style.Render(fmt.Sprintf("%d", n)), e, style.Render(moodLabels[i]))
 		}
-		s += "\n  " + styleDim.Render("press 1–5") + "\n"
-		return s
-
+		return s + "\n  " + styleDim.Render("press 1–5") + "\n"
 	case 1:
 		s := "\n  " + styleAccent.Render("Energy level?") + "\n\n"
-		energyBars := []string{"▪", "▪▪", "▪▪▪", "▪▪▪▪", "▪▪▪▪▪"}
-		for i, bar := range energyBars {
+		bars := []string{"▪", "▪▪", "▪▪▪", "▪▪▪▪", "▪▪▪▪▪"}
+		barStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#3ECFA4"))
+		for i, bar := range bars {
 			n := i + 1
 			style := styleDim
-			barStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#3ECFA4"))
 			if m.energy == n {
 				style = styleAccent
 			}
 			s += fmt.Sprintf("  %s  %s  %s\n", style.Render(fmt.Sprintf("%d", n)), barStyle.Render(bar), style.Render(energyLabels[i]))
 		}
-		s += "\n  " + styleDim.Render("press 1–5") + "\n"
-		return s
-
+		return s + "\n  " + styleDim.Render("press 1–5") + "\n"
 	case 2:
 		s := "\n  " + styleAccent.Render("Anything on your mind? (optional, press Enter to save)") + "\n\n"
-		s += "  " + styleTask.Render(string(m.note)) + styleDim.Render("_") + "\n"
-		return s
+		return s + "  " + styleTask.Render(string(m.note)) + styleDim.Render("_") + "\n"
 	}
 	return ""
 }
 
-func newInCmd(db *store.DB) *cobra.Command {
+func newInCmd(a *app.App) *cobra.Command {
 	return &cobra.Command{
 		Use:   "in",
 		Short: "Log your current mood and energy (30 seconds)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			svc := mood.NewService(db)
-			m := checkinModel{svc: svc}
+			m := checkinModel{svc: a.Moods}
 			p := tea.NewProgram(m)
 			result, err := p.Run()
 			if err != nil {
